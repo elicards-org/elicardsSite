@@ -27,8 +27,6 @@
   <a class="btn" id="ouvrir" href="#" hidden>Ouvrir Elicards</a>
 </main>
 <script>
-  // Lien de connexion reçu par email (Firebase, sendSignInLinkToEmail) : on rouvre l’app avec le lien complet.
-  // L’app le reçoit par le schéma elicards://connexion?lien=… (www/js/ecrans/accueil-compte.js, traiterLienConnexion).
   (function () {
     var lien = location.href;
     var estLien = /[?&]oobCode=/.test(lien) && /[?&]mode=signIn/.test(lien);
