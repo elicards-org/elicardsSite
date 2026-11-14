@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connexion — Elicards</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#070E36">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<style>
+  :root{--bg:#F4F6FB;--ink:#0B1650;--muted:#4F5A86;--accent:#1F3BB3;--primary:#D7263D;--primary-press:#A9142A}
+  @media (prefers-color-scheme: dark){:root{--bg:#070E36;--ink:#F4F6FB;--muted:#A9B3DE;--accent:#6E8BFF}}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:24px 16px;background:var(--bg);color:var(--ink);
+    font:16px/24px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;text-align:center}
+  main{max-width:360px;display:flex;flex-direction:column;align-items:center;gap:16px}
+  h1{margin:0;font-size:28px;line-height:32px}
+  p{margin:0;color:var(--muted)}
+  a.btn{display:block;width:100%;padding:16px 24px;border-radius:16px;background:var(--primary);color:#fff;font-weight:700;
+    text-decoration:none;box-shadow:0 5px 0 var(--primary-press)}
+</style>
+</head>
+<body>
+<main>
+  <h1>Connexion à Elicards</h1>
+  <p id="texte">Ouverture de l’app…</p>
+  <a class="btn" id="ouvrir" href="#" hidden>Ouvrir Elicards</a>
+</main>
+<script>
+  // Lien de connexion reçu par email (Firebase, sendSignInLinkToEmail) : on rouvre l’app avec le lien complet.
+  // L’app le reçoit par le schéma elicards://connexion?lien=… (www/js/ecrans/accueil-compte.js, traiterLienConnexion).
+  (function () {
+    var lien = location.href;
+    var estLien = /[?&]oobCode=/.test(lien) && /[?&]mode=signIn/.test(lien);
+    var texte = document.getElementById("texte"), bouton = document.getElementById("ouvrir");
+    if (!estLien) { texte.textContent = "Ce lien n’est pas un lien de connexion. Demande-en un nouveau depuis l’app."; return; }
+    var app = "elicards://connexion?lien=" + encodeURIComponent(lien);
+    bouton.href = app;
+    bouton.hidden = false;
+    texte.textContent = "Si l’app ne s’ouvre pas toute seule, touche le bouton ci-dessous, sur le téléphone où tu as demandé le lien.";
+    location.href = app;
+  })();
+</script>
+</body>
+</html>
