@@ -18,6 +18,7 @@
   p{margin:0;color:var(--muted)}
   a.btn{display:block;width:100%;padding:16px 24px;border-radius:16px;background:var(--primary);color:#fff;font-weight:700;
     text-decoration:none;box-shadow:0 5px 0 var(--primary-press)}
+  a.lien{color:var(--accent);font-weight:700;text-decoration:none;padding:8px}
 </style>
 </head>
 <body>
@@ -25,20 +26,48 @@
   <h1>Connexion à Elicards</h1>
   <p id="texte">Ouverture de l’app…</p>
   <a class="btn" id="ouvrir" href="#" hidden>Ouvrir Elicards</a>
+  <a class="lien" id="web" href="#" hidden>Continuer sur app.elicards.fr</a>
 </main>
 <script>
-  // Lien de connexion reçu par email (Firebase, sendSignInLinkToEmail) : on rouvre l’app avec le lien complet.
-  // L’app le reçoit par le schéma elicards://connexion?lien=… (www/js/ecrans/accueil-compte.js, traiterLienConnexion).
+  // Lien de connexion reçu par email (Firebase, sendSignInLinkToEmail). Firebase envoie tous les liens ici
+  // (adresse d’action de la console), avec l’adresse de retour demandée par l’app dans continueUrl :
+  //  · lien demandé sur le site (continueUrl = https://app.elicards.fr/…) : on y renvoie aussitôt, avec les
+  //    paramètres du lien (l’app web le termine elle-même, www/js/ecrans/accueil-compte.js) ;
+  //  · lien demandé dans l’app iPhone ou Android (continueUrl = cette page) : on rouvre l’app par le schéma
+  //    elicards://connexion?lien=… (traiterLienConnexion), et si l’app n’est pas là, on propose le site.
   (function () {
     var lien = location.href;
-    var estLien = /[?&]oobCode=/.test(lien) && /[?&]mode=signIn/.test(lien);
-    var texte = document.getElementById("texte"), bouton = document.getElementById("ouvrir");
+    var p = new URLSearchParams(location.search);
+    var estLien = !!p.get("oobCode") && p.get("mode") === "signIn";
+    var texte = document.getElementById("texte"), bouton = document.getElementById("ouvrir"), web = document.getElementById("web");
     if (!estLien) { texte.textContent = "Ce lien n’est pas un lien de connexion. Demande-en un nouveau depuis l’app."; return; }
+
+    // Le site reçoit les paramètres du lien tels que Firebase les lui aurait donnés (apiKey, oobCode, mode, lang)
+    function versSite(base) {
+      var u = new URL(base);
+      ["apiKey", "oobCode", "mode", "lang"].forEach(function (k) { if (p.get(k)) u.searchParams.set(k, p.get(k)); });
+      return u.toString();
+    }
+    var suite = p.get("continueUrl") || "";
+    var origine = "";
+    try { origine = suite ? new URL(suite) : ""; } catch (e) { origine = ""; }
+    // Seulement nos propres adresses (pas de renvoi vers un site quelconque) et pas cette page elle-même
+    var site = origine && origine.protocol === "https:" && /(^|\.)elicards\.fr$/.test(origine.hostname)
+      && !(origine.hostname === "elicards.fr" && /^\/connexion\/?$/.test(origine.pathname));
+    if (site) { texte.textContent = "Connexion en cours…"; location.replace(versSite(suite)); return; }
+
     var app = "elicards://connexion?lien=" + encodeURIComponent(lien);
     bouton.href = app;
     bouton.hidden = false;
+    web.href = versSite("https://app.elicards.fr/");
     texte.textContent = "Si l’app ne s’ouvre pas toute seule, touche le bouton ci-dessous, sur le téléphone où tu as demandé le lien.";
     location.href = app;
+    // L’app ne s’est pas ouverte (pas installée sur ce téléphone, ou supprimée) : la page est toujours là
+    setTimeout(function () {
+      if (document.hidden) return;
+      web.hidden = false;
+      texte.textContent = "L’app Elicards ne s’est pas ouverte. Si elle n’est pas installée sur ce téléphone, continue sur le site : ta connexion y sera terminée.";
+    }, 1500);
   })();
 </script>
 </body>
